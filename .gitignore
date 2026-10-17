@@ -1,0 +1,5 @@
+.build/
+build/
+windows/node_modules/
+windows/dist/
+.DS_Store

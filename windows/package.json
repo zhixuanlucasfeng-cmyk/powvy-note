@@ -1,0 +1,45 @@
+{
+  "name": "powvy-note",
+  "productName": "Powvy Note",
+  "version": "0.2.0",
+  "description": "Hover-to-open markdown notes",
+  "author": "Lucas Feng",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node check.js",
+    "dist": "node check.js && electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.lucasfeng.powvynote",
+    "files": [
+      "main.js",
+      "preload.js",
+      "core.js",
+      "md.js",
+      "renderer.js",
+      "index.html",
+      "tray.png"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "icon.png",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "PowvyNote-Setup-${version}.exe",
+      "shortcutName": "Powvy Note"
+    }
+  },
+  "devDependencies": {
+    "electron": "^38.8.6",
+    "electron-builder": "^26.15.3"
+  }
+}

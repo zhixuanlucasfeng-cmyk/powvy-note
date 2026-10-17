@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Powvy Note</title>
+<style>
+  :root { color-scheme: dark; --fg: #f2f2f2; --dim: #9a9a9a; --sel: rgba(255,255,255,.15); --line: rgba(255,255,255,.12); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  body { font: 13px "Segoe UI", system-ui, sans-serif; color: var(--fg); user-select: none; }
+  #shell { height: 100%; background: #000; border-radius: 0 0 10px 10px; transition: border-radius .15s; }
+  #shell.open { border-radius: 0 0 18px 18px; }
+  #panel { display: none; height: 100%; padding: 8px 0 8px; }
+  #shell.open #panel { display: flex; }
+  aside { width: 170px; padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid var(--line); }
+  aside header { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px; }
+  #list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  #list button { all: unset; padding: 4px 6px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+  #list button:hover { background: rgba(255,255,255,.07); }
+  #list button.sel { background: var(--sel); }
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  main header { display: flex; align-items: center; gap: 10px; padding: 2px 12px 8px; }
+  #name { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon { all: unset; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; color: var(--fg); cursor: default; }
+  .icon:hover { background: rgba(255,255,255,.12); }
+  .icon:focus-visible, #list button:focus-visible { outline: 1px solid #6aa0ff; }
+  .icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon.on svg { fill: currentColor; }
+  textarea { flex: 1; resize: none; border: 0; outline: 0; background: transparent; color: var(--fg); padding: 0 14px;
+             font: 13px Consolas, "Cascadia Mono", monospace; line-height: 1.45; user-select: text; }
+  #preview { flex: 1; overflow-y: auto; padding: 0 14px; user-select: text; line-height: 1.45; }
+  #preview > * { margin: 0 0 4px; }
+  #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6 { margin-top: 4px; }
+  #preview h1 { font-size: 22px; } #preview h2 { font-size: 18px; } #preview h3 { font-size: 16px; }
+  #preview h4 { font-size: 14px; } #preview h5 { font-size: 13px; } #preview h6 { font-size: 12px; }
+  #preview .task { display: flex; gap: 6px; align-items: baseline; }
+  #preview .task input { margin: 0; accent-color: #fff; }
+  #preview .done { text-decoration: line-through; color: var(--dim); }
+  #preview blockquote { margin-left: 0; padding-left: 8px; border-left: 3px solid gray; color: var(--dim); font-style: italic; }
+  #preview pre { margin: 0; padding: 0 2px; background: rgba(255,255,255,.08); font: 12px Consolas, monospace; white-space: pre-wrap; }
+  #preview code { font-family: Consolas, monospace; background: rgba(255,255,255,.08); padding: 0 3px; border-radius: 3px; }
+  #preview a { color: #8ab4ff; }
+  .empty { margin: auto; color: var(--dim); }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="panel">
+    <aside>
+      <header>Powvy Note <button class="icon" id="new" title="New note (Ctrl+N)" aria-label="New note"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></header>
+      <nav id="list"></nav>
+    </aside>
+    <main>
+      <header>
+        <span id="name"></span>
+        <button class="icon" id="toggle" title="Toggle preview" aria-label="Toggle preview"></button>
+        <button class="icon" id="pin" title="Keep open" aria-label="Keep open" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 17v5M9 3h6l-1 6 4 4H6l4-4z"/></svg></button>
+        <button class="icon" id="trash" title="Delete note" aria-label="Delete note"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        <button class="icon" id="close" title="Close (Esc) — quit from the tray icon" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </header>
+      <textarea id="editor" spellcheck="false" aria-label="Note text"></textarea>
+      <div id="preview" hidden></div>
+      <div class="empty" id="empty" hidden>No notes — press +</div>
+    </main>
+  </div>
+</div>
+<script src="md.js"></script>
+<script src="renderer.js"></script>
+</body>
+</html>

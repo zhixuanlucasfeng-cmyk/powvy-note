@@ -1,0 +1,13 @@
+Powvy Note 安装说明（M 系列和 Intel Mac 都能用，需要 macOS 14 或更新）
+
+1. 解压 PowvyNote.zip，把「Powvy Note」拖进「应用程序」。
+2. 双击打开。第一次会提示“无法验证开发者”（这个 app 没做 Apple 公证），点「完成」。
+3. 打开「系统设置 → 隐私与安全性」，拉到底部，点 Powvy Note 旁边的「仍要打开」，再输一次密码。
+   会用终端的话，也可以直接执行：xattr -dr com.apple.quarantine "/Applications/Powvy Note.app"
+
+用法
+- 鼠标移到屏幕顶部中间（刘海处）就会展开；移开自动收回。
+- 右上角 ✕ 或 Esc：收起（程序还在后台）。
+- 菜单栏的便签图标：打开便签 / 开机自启（Open at Login）/ 退出。
+- 退出后想再打开：在「应用程序」、启动台或 Spotlight（⌘ 空格 输入 Powvy）里打开 Powvy Note。
+- 笔记都是 .md 文件，存在 ~/Library/Application Support/Powvy Note/
