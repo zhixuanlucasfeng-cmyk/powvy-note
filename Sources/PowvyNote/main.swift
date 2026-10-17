@@ -250,7 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: "Powvy Note")
+        statusItem.button?.image = Self.menuBarLogo()
         let menu = NSMenu()
         menu.delegate = self
         menu.addItem(NSMenuItem(title: "Open Powvy Note", action: #selector(openPanel), keyEquivalent: ""))
@@ -259,6 +259,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Powvy Note", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
+    }
+
+    /// Single-color menu bar logo (the app icon's note hanging from the notch, as a silhouette).
+    /// Template image, so macOS tints it white/black like Ollama, ChatGPT, WeChat etc.
+    static func menuBarLogo() -> NSImage {
+        let img = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            NSColor.black.setFill()
+            NSBezierPath(roundedRect: NSRect(x: 2.5, y: 1.5, width: 13, height: 14), xRadius: 3, yRadius: 3).fill()
+            NSGraphicsContext.current?.compositingOperation = .clear
+            // notch bite at the top + two text lines
+            NSBezierPath(roundedRect: NSRect(x: 6, y: 12.5, width: 6, height: 5), xRadius: 1.8, yRadius: 1.8).fill()
+            NSBezierPath(roundedRect: NSRect(x: 5, y: 8, width: 8, height: 1.8), xRadius: 0.9, yRadius: 0.9).fill()
+            NSBezierPath(roundedRect: NSRect(x: 5, y: 4.5, width: 5, height: 1.8), xRadius: 0.9, yRadius: 0.9).fill()
+            return true
+        }
+        img.isTemplate = true
+        img.accessibilityDescription = "Powvy Note"
+        return img
     }
 
     /// Expand and take focus so it stays open until the user clicks elsewhere or presses Esc.
