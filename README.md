@@ -4,6 +4,8 @@ Hover-to-open markdown notes. On a Mac the panel drops out of the notch; on Wind
 
 - Hover the top-centre of the screen to open; move away to close. ✕ or Esc closes, the pin keeps it open.
 - Markdown preview with clickable task checkboxes.
+- **Strike out** a selection (or the caret's line) to mark it done: the S̶ button or ⇧⌘X / Ctrl+Shift+X. Saved as `~~text~~`.
+- **Bracket tags**: type `[` and pick To do / Homework / Test / Appointment (click or press 1–4). Dated tags put the caret inside — `[test 10/25]`, `[appointment Fri 3pm]` — and Enter or Tab hops out. Tags are coloured in the editor and shown as chips in the preview.
 - Menu bar (Mac) / tray (Windows) icon to reopen, open at login, or quit.
 - Notes live in `~/Library/Application Support/Powvy Note/` (Mac) or `%APPDATA%\Powvy Note\` (Windows).
 

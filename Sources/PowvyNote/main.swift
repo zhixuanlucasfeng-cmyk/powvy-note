@@ -13,6 +13,8 @@ final class Model: ObservableObject {
     @Published var expanded = false { didSet { if expanded != oldValue { onExpand?(expanded) } } }
     @Published var pinned = false
     @Published var preview = false
+    @Published var tagAnchor: Int? // caret offset just after a freshly typed `[` while the tag picker is up
+    weak var editor: NSTextView?
     var onExpand: ((Bool) -> Void)?
     var onClose: (() -> Void)?
     var notchHeight: CGFloat = 32
@@ -28,13 +30,6 @@ final class Model: ObservableObject {
 
     var current: Note? { notes.first { $0.url == selected } }
 
-    var text: Binding<String> {
-        Binding(
-            get: { self.current?.text ?? "" },
-            set: { self.update($0) }
-        )
-    }
-
     func update(_ text: String) {
         guard let i = notes.firstIndex(where: { $0.url == selected }) else { return }
         notes[i].text = text
@@ -46,6 +41,31 @@ final class Model: ObservableObject {
         notes.insert(n, at: 0)
         selected = n.url
         preview = false
+    }
+
+    /// Strike out (or restore) the selection, or the caret's line. Undoable.
+    func strike() {
+        guard let tv = editor, !preview else { return }
+        let r = toggleStrike(in: tv.string, range: tv.selectedRange())
+        replaceAll(tv, with: r.text)
+        tv.setSelectedRange(r.range)
+    }
+
+    /// Replace the typed `[` with a tag; caret lands inside the brackets for dated tags.
+    func insertTag(_ kind: String) {
+        guard let tv = editor, let anchor = tagAnchor else { return }
+        let ins = tagInsertion(kind)
+        tagAnchor = nil
+        tv.insertText(ins.text, replacementRange: NSRange(location: anchor - 1, length: 1))
+        tv.setSelectedRange(NSRange(location: anchor - 1 + ins.caret, length: 0))
+        tv.window?.makeFirstResponder(tv)
+    }
+
+    private func replaceAll(_ tv: NSTextView, with text: String) {
+        let all = NSRange(location: 0, length: (tv.string as NSString).length)
+        guard tv.shouldChangeText(in: all, replacementString: text) else { return }
+        tv.textStorage?.replaceCharacters(in: all, with: text)
+        tv.didChangeText()
     }
 
     func deleteCurrent() {
@@ -114,6 +134,9 @@ struct ExpandedView: View {
                 HStack(spacing: 10) {
                     Text(model.current?.title ?? "").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                     Spacer()
+                    IconButton("strikethrough", help: "Strike out the selection or line — mark it done (⇧⌘X)") { model.strike() }
+                        .keyboardShortcut("x", modifiers: [.command, .shift])
+                        .disabled(model.preview).opacity(model.preview ? 0.3 : 1)
                     IconButton(model.preview ? "pencil" : "eye", help: "Toggle preview") { model.preview.toggle() }
                     IconButton(model.pinned ? "pin.fill" : "pin", help: "Keep open") { model.pinned.toggle() }
                     IconButton("trash", help: "Delete note") { model.deleteCurrent() }
@@ -128,10 +151,9 @@ struct ExpandedView: View {
                         model.update(toggleTask(in: model.current?.text ?? "", line: line))
                     }
                 } else {
-                    TextEditor(text: model.text)
-                        .font(.system(size: 13, design: .monospaced))
-                        .scrollContentBackground(.hidden)
+                    NoteEditor(model: model)
                         .padding(.horizontal, 8)
+                        .overlay(alignment: .bottom) { if model.tagAnchor != nil { TagPicker(model: model) } }
                 }
             }
         }
@@ -163,7 +185,23 @@ struct MarkdownView: View {
     }
 
     func inline(_ s: String) -> Text {
-        Text((try? AttributedString(markdown: s)) ?? AttributedString(s))
+        var out = AttributedString()
+        for part in splitTags(s) {
+            switch part {
+            case let .text(t):
+                // markdown parsing drops edge spaces, which separate text from chips — put them back
+                if t.first == " " { out += AttributedString(" ") }
+                out += (try? AttributedString(markdown: t)) ?? AttributedString(t) // handles ~~strike~~ too
+                if t.count > 1, t.last == " " { out += AttributedString(" ") }
+            case let .tag(kind, detail):
+                var chip = AttributedString("\u{2009}\(Tag.label[kind] ?? kind)\(detail.isEmpty ? "" : " · " + detail)\u{2009}")
+                chip.foregroundColor = .black
+                chip.backgroundColor = Tag.color[kind]
+                chip.font = .system(size: 12, weight: .semibold)
+                out += chip
+            }
+        }
+        return Text(out)
     }
 
     @ViewBuilder func row(_ b: MDBlock) -> some View {
@@ -192,6 +230,132 @@ struct MarkdownView: View {
     }
 }
 
+enum Tag {
+    static let label = ["todo": "To do", "homework": "Homework", "test": "Test", "appointment": "Appointment"]
+    static let color: [String: Color] = [
+        "todo": Color(red: 0.94, green: 0.48, blue: 0.13), "homework": Color(red: 0.36, green: 0.62, blue: 1),
+        "test": Color(red: 1, green: 0.36, blue: 0.33), "appointment": Color(red: 0.3, green: 0.8, blue: 0.5),
+    ]
+}
+
+/// Appears after typing `[`: click a tag or press 1–4; Esc or any other key dismisses it.
+struct TagPicker: View {
+    @ObservedObject var model: Model
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(tagKinds.enumerated()), id: \.offset) { i, kind in
+                Button { model.insertTag(kind) } label: {
+                    Text("\(i + 1) \(Tag.label[kind]!)").font(.system(size: 12, weight: .semibold)).foregroundStyle(.black)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Tag.color[kind]!))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(6)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.15)))
+        .padding(.bottom, 4)
+    }
+}
+
+/// Plain-text NSTextView (TextEditor can't report the selection) that shows ~~struck~~ text and tags live.
+struct NoteEditor: NSViewRepresentable {
+    @ObservedObject var model: Model
+
+    func makeCoordinator() -> Coordinator { Coordinator(model: model) }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scroll = NSTextView.scrollableTextView()
+        scroll.drawsBackground = false
+        scroll.autohidesScrollers = true
+        let tv = scroll.documentView as! NSTextView
+        tv.delegate = context.coordinator
+        tv.isRichText = false
+        tv.allowsUndo = true
+        tv.drawsBackground = false
+        tv.insertionPointColor = .white
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.isAutomaticTextReplacementEnabled = false
+        tv.typingAttributes = Coordinator.base
+        model.editor = tv
+        return scroll
+    }
+
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        let tv = scroll.documentView as! NSTextView
+        model.editor = tv
+        let text = model.current?.text ?? ""
+        if tv.string != text { // switched notes or edited elsewhere
+            tv.string = text
+            Coordinator.style(tv)
+            tv.undoManager?.removeAllActions()
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        let model: Model
+        var pendingAnchor: Int?
+        init(model: Model) { self.model = model }
+
+        static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        static let base: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.white]
+        static let strikeRE = try! NSRegularExpression(pattern: strikePattern)
+        static let tagRE = try! NSRegularExpression(pattern: tagPattern, options: .caseInsensitive)
+
+        static func style(_ tv: NSTextView) {
+            guard let ts = tv.textStorage else { return }
+            let all = NSRange(location: 0, length: ts.length)
+            ts.beginEditing()
+            ts.setAttributes(base, range: all)
+            for m in strikeRE.matches(in: ts.string, range: all) {
+                ts.addAttributes([.strikethroughStyle: NSUnderlineStyle.single.rawValue, .foregroundColor: NSColor.secondaryLabelColor], range: m.range)
+            }
+            for m in tagRE.matches(in: ts.string, range: all) {
+                let kind = (ts.string as NSString).substring(with: m.range(at: 1)).lowercased()
+                ts.addAttributes([.foregroundColor: NSColor(Tag.color[kind] ?? .white),
+                                  .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .bold)], range: m.range)
+            }
+            ts.endEditing()
+            tv.typingAttributes = base
+        }
+
+        func textView(_ tv: NSTextView, shouldChangeTextIn range: NSRange, replacementString s: String?) -> Bool {
+            MainActor.assumeIsolated {
+                if model.tagAnchor != nil, let s, s.count == 1, let n = Int(s), (1...tagKinds.count).contains(n) {
+                    model.insertTag(tagKinds[n - 1])
+                    return false
+                }
+                if s == "\n" || s == "\t", range.length == 0, skipsTagClose(in: tv.string, at: range.location) {
+                    let after = NSRange(location: range.location + 1, length: 0)
+                    tv.setSelectedRange(after)
+                    if s == "\n" { DispatchQueue.main.async { tv.insertText("\n", replacementRange: after) } }
+                    return false
+                }
+                pendingAnchor = s == "[" && range.length == 0 && opensTagPicker(in: tv.string, at: range.location) ? range.location + 1 : nil
+                return true
+            }
+        }
+
+        func textDidChange(_ note: Notification) {
+            guard let tv = note.object as? NSTextView else { return }
+            MainActor.assumeIsolated {
+                model.tagAnchor = pendingAnchor // any edit other than a fresh `[` closes the picker
+                pendingAnchor = nil
+                model.update(tv.string)
+                Coordinator.style(tv)
+            }
+        }
+
+        func textViewDidChangeSelection(_ note: Notification) {
+            guard let tv = note.object as? NSTextView else { return }
+            MainActor.assumeIsolated {
+                if let a = model.tagAnchor, tv.selectedRange() != NSRange(location: a, length: 0) { model.tagAnchor = nil }
+            }
+        }
+    }
+}
+
 // MARK: - Window
 
 final class NotchPanel: NSPanel {
@@ -206,7 +370,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ note: Notification) {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let dir = support.appendingPathComponent("Powvy Note")
+        let dir = ProcessInfo.processInfo.environment["POWVY_DIR"].map { URL(fileURLWithPath: $0) } // dev/testing
+            ?? support.appendingPathComponent("Powvy Note")
         guard let store = try? NoteStore(dir: dir) else { fatalError("cannot create \(dir.path)") }
         model = Model(store: store)
 
@@ -234,7 +399,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.collapseIfIdle(force: false) }
         }
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
-            if e.keyCode == 53 { self?.collapseIfIdle(force: true); return nil } // Esc
+            if e.keyCode == 53 { // Esc: close the tag picker first, then the panel
+                if self?.model.tagAnchor != nil { self?.model.tagAnchor = nil } else { self?.collapseIfIdle(force: true) }
+                return nil
+            }
             return e
         }
         setUpStatusItem()
