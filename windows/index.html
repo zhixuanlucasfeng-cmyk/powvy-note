@@ -9,10 +9,14 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
   body { font: 13px "Segoe UI", system-ui, sans-serif; color: var(--fg); user-select: none; }
-  #shell { height: 100%; background: #000; border-radius: 0 0 10px 10px; transition: border-radius .15s; }
-  #shell.open { border-radius: 0 0 18px 18px; }
-  #panel { display: none; height: 100%; padding: 8px 0 8px; }
-  #shell.open #panel { display: flex; }
+  /* The window stays 600×400; only #shell grows out of the 200×24 pill. #panel keeps its full size the
+     whole time and is clipped, so nothing reflows mid-animation. */
+  #shell { width: 200px; height: 24px; margin: 0 auto; overflow: hidden; background: #000; border-radius: 0 0 10px 10px;
+           transition: width .3s cubic-bezier(.2,.9,.25,1.04), height .3s cubic-bezier(.2,.9,.25,1.04), border-radius .3s; }
+  #shell.open { width: 600px; height: 400px; border-radius: 0 0 18px 18px; }
+  #panel { display: flex; width: 600px; height: 400px; padding: 8px 0 8px; opacity: 0; visibility: hidden; transition: opacity .12s, visibility 0s .12s; }
+  #shell.open #panel { opacity: 1; visibility: visible; transition: opacity .15s .06s, visibility 0s; }
+  @media (prefers-reduced-motion: reduce) { #shell, #panel, #shell.open #panel { transition: none; } }
   aside { width: 170px; padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid var(--line); }
   aside header { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px; }
   #list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -39,7 +43,7 @@
   #paint::-webkit-scrollbar-thumb { background: transparent; }
   #paint del, #preview del { color: var(--dim); }
   #paint .t { font-weight: 700; }
-  .k-todo { --k: #f07a22; } .k-homework { --k: #5c9eff; } .k-test { --k: #ff5c54; } .k-appointment { --k: #4ccc80; }
+  .k-todo { --k: #f07a22; } .k-homework { --k: #5c9eff; } .k-test { --k: #ff5c54; } .k-appointment { --k: #4ccc80; } .k-class { --k: #b88cff; }
   #paint .t { color: var(--k); }
   .chip { background: var(--k); color: #000; font-weight: 600; font-size: 12px; padding: 0 5px; border-radius: 4px; }
   #tagbar { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px;
@@ -83,7 +87,7 @@
         <div id="paint" aria-hidden="true"></div>
         <textarea id="editor" spellcheck="false" aria-label="Note text"></textarea>
         <div id="tagbar" hidden role="toolbar" aria-label="Insert tag">
-          <button class="k-todo" data-kind="todo">1 To do</button><button class="k-homework" data-kind="homework">2 Homework</button><button class="k-test" data-kind="test">3 Test</button><button class="k-appointment" data-kind="appointment">4 Appointment</button>
+          <button class="k-todo" data-kind="todo">1 To do</button><button class="k-homework" data-kind="homework">2 Homework</button><button class="k-test" data-kind="test">3 Test</button><button class="k-appointment" data-kind="appointment">4 Appointment</button><button class="k-class" data-kind="class">5 Class</button>
         </div>
       </div>
       <div id="preview" hidden></div>

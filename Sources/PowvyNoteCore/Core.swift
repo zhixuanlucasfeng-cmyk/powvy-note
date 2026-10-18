@@ -99,9 +99,11 @@ public func toggleTask(in src: String, line: Int) -> String {
 // MARK: - Strikethrough ("done") and bracket tags. Mirrored in windows/md.js.
 
 public let strikePattern = #"~~(?=\S)(.+?)(?<=\S)~~"#
-/// `[todo]`, `[homework]`, `[test 10/25]`, `[appointment Fri 3pm]` — not `[test](url)` links.
-public let tagPattern = #"\[(todo|homework|test|appointment)(?:[:\s]+([^\[\]\n]*?))?\s*\](?!\()"#
-public let tagKinds = ["todo", "homework", "test", "appointment"]
+/// `[todo]`, `[homework]`, `[test 10/25]`, `[appointment Fri 3pm]`, `[class Maths 9am]` — not `[test](url)` links.
+public let tagPattern = #"\[(todo|homework|test|appointment|class)(?:[:\s]+([^\[\]\n]*?))?\s*\](?!\()"#
+public let tagKinds = ["todo", "homework", "test", "appointment", "class"]
+/// Tags that carry a date/time/subject, so the caret is left inside the brackets.
+public let detailTagKinds: Set<String> = ["test", "appointment", "class"]
 
 public enum Inline: Equatable {
     case text(String)
@@ -124,7 +126,7 @@ public func splitTags(_ s: String) -> [Inline] {
 
 /// What the tag picker inserts in place of the typed `[`, and where the caret goes (UTF-16 offset into it).
 public func tagInsertion(_ kind: String) -> (text: String, caret: Int) {
-    kind == "test" || kind == "appointment" ? ("[\(kind) ]", kind.utf16.count + 2) : ("[\(kind)] ", kind.utf16.count + 3)
+    detailTagKinds.contains(kind) ? ("[\(kind) ]", kind.utf16.count + 2) : ("[\(kind)] ", kind.utf16.count + 3)
 }
 
 /// Should typing `[` at `location` open the tag picker? Not for task boxes (`- [`).
@@ -195,5 +197,5 @@ public func skipsTagClose(in src: String, at location: Int) -> Bool {
     guard location < ns.length, ns.substring(with: NSRange(location: location, length: 1)) == "]" else { return false }
     let lineStart = ns.lineRange(for: NSRange(location: location, length: 0)).location
     let before = ns.substring(with: NSRange(location: lineStart, length: location - lineStart))
-    return before.range(of: #"\[(test|appointment)\b[^\[\]]*$"#, options: [.regularExpression, .caseInsensitive]) != nil
+    return before.range(of: #"\[(test|appointment|class)\b[^\[\]]*$"#, options: [.regularExpression, .caseInsensitive]) != nil
 }

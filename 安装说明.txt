@@ -9,8 +9,9 @@ Powvy Note 安装说明（M 系列和 Intel Mac 都能用，需要 macOS 14 或�
 - 鼠标移到屏幕顶部中间（刘海处）就会展开；移开自动收回。
 - 右上角 ✕ 或 Esc：收起（程序还在后台）。
 - 划掉（表示做完）：选中一段文字，点右上角带横线的 S 按钮或按 ⌘⇧X；不选文字就划掉光标所在的整行。再点一次取消。
-- 标签：输入 [ 会弹出 To do / Homework / Test / Appointment，点一下或按 1–4 插入。
-  Test 和 Appointment 插入后光标停在括号里，直接输日期，比如 [test 10/25]、[appointment 周五 3pm]，按回车或 Tab 跳出括号。
+- 复制粘贴：⌘C / ⌘V / ⌘X / ⌘A / ⌘Z 都能用，右键也有菜单。
+- 标签：输入 [ 会弹出 To do / Homework / Test / Appointment / Class，点一下或按 1–5 插入。
+  Test、Appointment 和 Class 插入后光标停在括号里，直接输日期或科目，比如 [test 10/25]、[appointment 周五 3pm]、[class Maths 9am]，按回车或 Tab 跳出括号。
 - 菜单栏的便签图标：打开便签 / 开机自启（Open at Login）/ 退出。
 - 退出后想再打开：在「应用程序」、启动台或 Spotlight（⌘ 空格 输入 Powvy）里打开 Powvy Note。
 - 笔记都是 .md 文件，存在 ~/Library/Application Support/Powvy Note/

@@ -5,7 +5,7 @@ const PENCIL = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></sv
 
 let notes = [], selected = null, preview = false, pinned = false
 let tagAnchor = null, pendingAnchor = null // caret offset just after a freshly typed `[` while the tag bar is up
-const TAG_LABEL = { todo: 'To do', homework: 'Homework', test: 'Test', appointment: 'Appointment' }
+const TAG_LABEL = { todo: 'To do', homework: 'Homework', test: 'Test', appointment: 'Appointment', class: 'Class' }
 const current = () => notes.find(n => n.file === selected)
 
 const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
@@ -128,7 +128,7 @@ $('new').onclick = newNote
 $('editor').addEventListener('beforeinput', e => {
   const ta = e.target
   if (e.inputType !== 'insertText' || e.data == null) return
-  const n = /^[1-4]$/.test(e.data) ? +e.data : 0
+  const n = /^[1-9]$/.test(e.data) && +e.data <= tagKinds.length ? +e.data : 0
   if (tagAnchor !== null && n) { e.preventDefault(); insertTag(tagKinds[n - 1]); return }
   pendingAnchor = e.data === '[' && ta.selectionStart === ta.selectionEnd && opensTagPicker(ta.value, ta.selectionStart)
     ? ta.selectionStart + 1 : null

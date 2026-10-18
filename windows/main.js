@@ -14,21 +14,27 @@ const OPEN = { width: 600, height: 400 }
 let win, tray, store
 let expanded = false, pinned = false, lastInside = Date.now()
 
+/** The window is always the open size; CSS grows the black panel out of the pill (resizing per frame stutters). */
 function layout() {
-  const size = expanded ? OPEN : PILL
   const b = screen.getPrimaryDisplay().bounds // primary = taskbar display; doesn't hop with focus
-  win.setBounds({ x: Math.round(b.x + (b.width - size.width) / 2), y: b.y, ...size })
+  win.setBounds({ x: Math.round(b.x + (b.width - OPEN.width) / 2), y: b.y, ...OPEN })
+}
+
+/** The part of the screen that's actually showing: the pill, or the open panel. */
+function visibleRect() {
+  const size = expanded ? OPEN : PILL, b = win.getBounds()
+  return { x: b.x + (b.width - size.width) / 2, y: b.y, ...size }
 }
 
 function setExpanded(v) {
   if (v === expanded) return
   expanded = v
-  layout()
+  win.setIgnoreMouseEvents(!v) // collapsed: clicks pass through the transparent area
   win.webContents.send('expanded', v)
 }
 
 function inside() {
-  const p = screen.getCursorScreenPoint(), r = win.getBounds()
+  const p = screen.getCursorScreenPoint(), r = visibleRect()
   return p.x >= r.x - 2 && p.x <= r.x + r.width + 2 && p.y >= r.y - 2 && p.y <= r.y + r.height + 2
 }
 
@@ -88,18 +94,25 @@ app.whenReady().then(() => {
   ipcMain.on('open-external', (_, url) => { if (/^https?:\/\//.test(url)) shell.openExternal(url) })
 
   win = new BrowserWindow({
-    ...PILL, frame: false, transparent: true, resizable: false, movable: false,
+    ...OPEN, frame: false, transparent: true, resizable: false, movable: false,
     minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true,
     alwaysOnTop: true, hasShadow: false, show: false,
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   })
   win.setAlwaysOnTop(true, 'screen-saver') // above full-screen apps and the taskbar
   win.loadFile('index.html')
-  win.once('ready-to-show', () => { layout(); win.showInactive() }) // never steal focus on launch
+  win.once('ready-to-show', () => { layout(); win.setIgnoreMouseEvents(true); win.showInactive() }) // never steal focus on launch
   win.on('blur', () => collapse(false))
   win.on('close', e => { if (!app.isQuitting) { e.preventDefault(); collapse(true) } }) // Alt+F4 collapses
   win.webContents.on('will-navigate', e => e.preventDefault())
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  // Right-click menu for the editor (frameless Electron windows have none by default)
+  win.webContents.on('context-menu', (_, p) => {
+    if (!p.isEditable && !p.selectionText) return
+    Menu.buildFromTemplate(p.isEditable
+      ? [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { type: 'separator' }, { role: 'selectAll' }]
+      : [{ role: 'copy' }]).popup({ window: win })
+  })
 
   for (const ev of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(ev, layout)
   setInterval(tick, 100) // poll the cursor: works without focus, like the Mac version

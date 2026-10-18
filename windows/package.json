@@ -1,7 +1,7 @@
 {
   "name": "powvy-note",
   "productName": "Powvy Note",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Hover-to-open markdown notes",
   "author": "Lucas Feng",
   "main": "main.js",

@@ -36,9 +36,11 @@ function toggleTask(src, line) {
 
 // Strikethrough ("done") and bracket tags — mirrors the same section of Sources/PowvyNoteCore/Core.swift.
 const strikeRE = /~~(?=\S)(.+?)(?<=\S)~~/g
-/** `[todo]`, `[homework]`, `[test 10/25]`, `[appointment Fri 3pm]` — not `[test](url)` links. */
-const tagRE = /\[(todo|homework|test|appointment)(?:[:\s]+([^\[\]\n]*?))?\s*\](?!\()/gi
-const tagKinds = ['todo', 'homework', 'test', 'appointment']
+/** `[todo]`, `[homework]`, `[test 10/25]`, `[appointment Fri 3pm]`, `[class Maths 9am]` — not `[test](url)` links. */
+const tagRE = /\[(todo|homework|test|appointment|class)(?:[:\s]+([^\[\]\n]*?))?\s*\](?!\()/gi
+const tagKinds = ['todo', 'homework', 'test', 'appointment', 'class']
+/** Tags that carry a date/time/subject, so the caret is left inside the brackets. */
+const detailTagKinds = ['test', 'appointment', 'class']
 
 function splitTags(s) {
   const out = []
@@ -54,7 +56,7 @@ function splitTags(s) {
 
 /** What the tag picker inserts in place of the typed `[`, and where the caret goes (offset into it). */
 function tagInsertion(kind) {
-  return kind === 'test' || kind === 'appointment'
+  return detailTagKinds.includes(kind)
     ? { text: `[${kind} ]`, caret: kind.length + 2 }
     : { text: `[${kind}] `, caret: kind.length + 3 }
 }
@@ -66,7 +68,7 @@ function opensTagPicker(src, at) {
 
 /** Caret sits just before the `]` of a dated tag being filled in (`[test 10/25|]`): Enter/Tab should hop out. */
 function skipsTagClose(src, at) {
-  return src[at] === ']' && /\[(test|appointment)\b[^[\]]*$/i.test(src.slice(src.lastIndexOf('\n', at - 1) + 1, at))
+  return src[at] === ']' && /\[(test|appointment|class)\b[^[\]]*$/i.test(src.slice(src.lastIndexOf('\n', at - 1) + 1, at))
 }
 
 /**

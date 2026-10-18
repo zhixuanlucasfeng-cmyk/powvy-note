@@ -17,7 +17,8 @@ final class Model: ObservableObject {
     weak var editor: NSTextView?
     var onExpand: ((Bool) -> Void)?
     var onClose: (() -> Void)?
-    var notchHeight: CGFloat = 32
+    var notchSize = CGSize(width: 200, height: 32)
+    static let openSize = CGSize(width: 600, height: 400)
 
     init(store: NoteStore) {
         self.store = store
@@ -81,18 +82,25 @@ final class Model: ObservableObject {
 struct RootView: View {
     @ObservedObject var model: Model
 
+    // The window never resizes: only this black shape grows out of the notch. Resizing an NSWindow every
+    // frame re-lays out the whole SwiftUI tree, which is what made opening stutter.
     var body: some View {
+        let open = model.expanded
+        let shape = UnevenRoundedRectangle(bottomLeadingRadius: open ? 18 : 10, bottomTrailingRadius: open ? 18 : 10)
         ZStack(alignment: .top) {
-            UnevenRoundedRectangle(bottomLeadingRadius: model.expanded ? 18 : 10,
-                                   bottomTrailingRadius: model.expanded ? 18 : 10)
-                .fill(.black)
-            if model.expanded {
+            shape.fill(.black)
+            if open {
                 ExpandedView(model: model)
-                    .padding(.top, model.notchHeight)
-                    .transition(.opacity)
+                    .padding(.top, model.notchSize.height)
+                    .frame(width: Model.openSize.width, height: Model.openSize.height) // fixed: no reflow while growing
+                    .transition(.opacity.animation(.easeOut(duration: 0.12).delay(open ? 0.06 : 0)))
             }
         }
-        .animation(.easeOut(duration: 0.15), value: model.expanded)
+        .frame(width: open ? Model.openSize.width : model.notchSize.width,
+               height: open ? Model.openSize.height : model.notchSize.height, alignment: .top)
+        .clipShape(shape)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .animation(.spring(response: 0.3, dampingFraction: 0.86), value: open)
         .preferredColorScheme(.dark)
     }
 }
@@ -135,7 +143,6 @@ struct ExpandedView: View {
                     Text(model.current?.title ?? "").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                     Spacer()
                     IconButton("strikethrough", help: "Strike out the selection or line — mark it done (⇧⌘X)") { model.strike() }
-                        .keyboardShortcut("x", modifiers: [.command, .shift])
                         .disabled(model.preview).opacity(model.preview ? 0.3 : 1)
                     IconButton(model.preview ? "pencil" : "eye", help: "Toggle preview") { model.preview.toggle() }
                     IconButton(model.pinned ? "pin.fill" : "pin", help: "Keep open") { model.pinned.toggle() }
@@ -231,14 +238,15 @@ struct MarkdownView: View {
 }
 
 enum Tag {
-    static let label = ["todo": "To do", "homework": "Homework", "test": "Test", "appointment": "Appointment"]
+    static let label = ["todo": "To do", "homework": "Homework", "test": "Test", "appointment": "Appointment", "class": "Class"]
     static let color: [String: Color] = [
         "todo": Color(red: 0.94, green: 0.48, blue: 0.13), "homework": Color(red: 0.36, green: 0.62, blue: 1),
         "test": Color(red: 1, green: 0.36, blue: 0.33), "appointment": Color(red: 0.3, green: 0.8, blue: 0.5),
+        "class": Color(red: 0.72, green: 0.55, blue: 1),
     ]
 }
 
-/// Appears after typing `[`: click a tag or press 1–4; Esc or any other key dismisses it.
+/// Appears after typing `[`: click a tag or press 1–5; Esc or any other key dismisses it.
 struct TagPicker: View {
     @ObservedObject var model: Model
     var body: some View {
@@ -278,7 +286,11 @@ struct NoteEditor: NSViewRepresentable {
         tv.isAutomaticDashSubstitutionEnabled = false
         tv.isAutomaticTextReplacementEnabled = false
         tv.typingAttributes = Coordinator.base
+        tv.textStorage?.delegate = context.coordinator
         model.editor = tv
+        DispatchQueue.main.async { // opened from the menu bar: panel is already key, so put the caret in straight away
+            if let w = tv.window, w.isKeyWindow, !(w.firstResponder is NSTextView) { w.makeFirstResponder(tv) }
+        }
         return scroll
     }
 
@@ -287,13 +299,12 @@ struct NoteEditor: NSViewRepresentable {
         model.editor = tv
         let text = model.current?.text ?? ""
         if tv.string != text { // switched notes or edited elsewhere
-            tv.string = text
-            Coordinator.style(tv)
+            tv.string = text // restyled by the text storage delegate
             tv.undoManager?.removeAllActions()
         }
     }
 
-    final class Coordinator: NSObject, NSTextViewDelegate {
+    final class Coordinator: NSObject, NSTextViewDelegate, NSTextStorageDelegate {
         let model: Model
         var pendingAnchor: Int?
         init(model: Model) { self.model = model }
@@ -303,21 +314,22 @@ struct NoteEditor: NSViewRepresentable {
         static let strikeRE = try! NSRegularExpression(pattern: strikePattern)
         static let tagRE = try! NSRegularExpression(pattern: tagPattern, options: .caseInsensitive)
 
-        static func style(_ tv: NSTextView) {
-            guard let ts = tv.textStorage else { return }
-            let all = NSRange(location: 0, length: ts.length)
-            ts.beginEditing()
-            ts.setAttributes(base, range: all)
-            for m in strikeRE.matches(in: ts.string, range: all) {
+        static let tagFont = NSFont.monospacedSystemFont(ofSize: 13, weight: .bold)
+        static let tagColors = Tag.color.mapValues { NSColor($0) }
+
+        /// Strikes and tags never span lines, so only the edited paragraph(s) need restyling — typing stays
+        /// O(line) instead of re-laying out the whole note on every keystroke.
+        func textStorage(_ ts: NSTextStorage, didProcessEditing mask: NSTextStorageEditActions, range: NSRange, changeInLength delta: Int) {
+            guard mask.contains(.editedCharacters) else { return }
+            let para = (ts.string as NSString).paragraphRange(for: range)
+            ts.setAttributes(Coordinator.base, range: para)
+            for m in Coordinator.strikeRE.matches(in: ts.string, range: para) {
                 ts.addAttributes([.strikethroughStyle: NSUnderlineStyle.single.rawValue, .foregroundColor: NSColor.secondaryLabelColor], range: m.range)
             }
-            for m in tagRE.matches(in: ts.string, range: all) {
+            for m in Coordinator.tagRE.matches(in: ts.string, range: para) {
                 let kind = (ts.string as NSString).substring(with: m.range(at: 1)).lowercased()
-                ts.addAttributes([.foregroundColor: NSColor(Tag.color[kind] ?? .white),
-                                  .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .bold)], range: m.range)
+                ts.addAttributes([.foregroundColor: Coordinator.tagColors[kind] ?? .white, .font: Coordinator.tagFont], range: m.range)
             }
-            ts.endEditing()
-            tv.typingAttributes = base
         }
 
         func textView(_ tv: NSTextView, shouldChangeTextIn range: NSRange, replacementString s: String?) -> Bool {
@@ -343,7 +355,7 @@ struct NoteEditor: NSViewRepresentable {
                 model.tagAnchor = pendingAnchor // any edit other than a fresh `[` closes the picker
                 pendingAnchor = nil
                 model.update(tv.string)
-                Coordinator.style(tv)
+                tv.typingAttributes = Coordinator.base // don't inherit strike/tag styling from the previous char
             }
         }
 
@@ -385,10 +397,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.isMovable = false
         panel.contentView = NSHostingView(rootView: RootView(model: model))
 
-        model.notchHeight = notchSize().height
-        model.onExpand = { [weak self] _ in self?.layout(animate: true) }
+        model.notchSize = notchSize()
+        model.onExpand = { [weak self] open in self?.panel.ignoresMouseEvents = !open } // collapsed: clicks pass through to the menu bar
         model.onClose = { [weak self] in self?.collapseIfIdle(force: true) }
-        layout(animate: false)
+        layout()
+        panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
 
         // Poll the cursor: tracking areas are unreliable on a non-key, nonactivating panel.
@@ -399,6 +412,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.collapseIfIdle(force: false) }
         }
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+            // ⇧⌘X strikes. Matched here by exact modifiers: a SwiftUI .keyboardShortcut also fired on plain ⌘X (Cut).
+            if e.keyCode == 7, e.modifierFlags.intersection(.deviceIndependentFlagsMask) == [.command, .shift] {
+                self?.model.strike(); return nil
+            }
             if e.keyCode == 53 { // Esc: close the tag picker first, then the panel
                 if self?.model.tagAnchor != nil { self?.model.tagAnchor = nil } else { self?.collapseIfIdle(force: true) }
                 return nil
@@ -406,8 +423,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return e
         }
         setUpStatusItem()
+        setUpEditMenu()
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.layout(animate: false) }
+            MainActor.assumeIsolated { self?.layout() }
         }
     }
 
@@ -427,6 +445,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Powvy Note", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
+    }
+
+    /// Accessory apps show no menu bar, but key equivalents still route through NSApp.mainMenu —
+    /// without these items ⌘V/⌘C/⌘X/⌘A/⌘Z do nothing in the editor.
+    func setUpEditMenu() {
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let main = NSMenu()
+        let appItem = NSMenuItem(); appItem.submenu = NSMenu(title: "Powvy Note") // first item is the app menu
+        let editItem = NSMenuItem(); editItem.submenu = edit
+        main.addItem(appItem)
+        main.addItem(editItem)
+        NSApp.mainMenu = main
     }
 
     /// Single-color menu bar logo (the app icon's note hanging from the notch, as a silhouette).
@@ -451,6 +488,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openPanel() {
         model.expanded = true
         panel.makeKeyAndOrderFront(nil)
+        DispatchQueue.main.async { [self] in // editor exists once SwiftUI has rendered the open panel
+            if let tv = model.editor { panel.makeFirstResponder(tv) } // type/paste straight away
+        }
     }
 
     @objc func toggleLogin() {
@@ -482,20 +522,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return CGSize(width: 200, height: menuBar > 0 ? menuBar : 24)
     }
 
-    func layout(animate: Bool) {
-        let notch = notchSize()
-        let size = model.expanded ? CGSize(width: 600, height: 400) : notch
+    /// The window is always the open size; what's visible is decided by SwiftUI.
+    func layout() {
+        model.notchSize = notchSize()
+        let size = CGSize(width: max(Model.openSize.width, model.notchSize.width), height: Model.openSize.height)
         let f = screen.frame
-        let frame = NSRect(x: f.midX - size.width / 2, y: f.maxY - size.height, width: size.width, height: size.height)
-        // animator() is async and retargetable; setFrame(animate:) blocks and can stall mid-way
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = animate ? 0.18 : 0
-            panel.animator().setFrame(frame, display: true)
-        }
+        panel.setFrame(NSRect(x: f.midX - size.width / 2, y: f.maxY - size.height, width: size.width, height: size.height), display: true)
+    }
+
+    /// The part of the screen that's actually showing: the notch pill, or the open panel.
+    var visibleRect: NSRect {
+        let size = model.expanded ? Model.openSize : model.notchSize
+        let f = screen.frame
+        return NSRect(x: f.midX - size.width / 2, y: f.maxY - size.height, width: size.width, height: size.height)
     }
 
     func tick() {
-        let inside = NSMouseInRect(NSEvent.mouseLocation, panel.frame.insetBy(dx: -2, dy: -2), false)
+        let inside = NSMouseInRect(NSEvent.mouseLocation, visibleRect.insetBy(dx: -2, dy: -2), false)
         if inside {
             lastInside = Date()
             if !model.expanded { model.expanded = true }
@@ -507,7 +550,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Typing (key panel) or pinned keeps it open; Esc forces it shut.
     func collapseIfIdle(force: Bool) {
         guard model.expanded else { return }
-        if !force && (model.pinned || NSMouseInRect(NSEvent.mouseLocation, panel.frame, false)) { return }
+        if !force && (model.pinned || NSMouseInRect(NSEvent.mouseLocation, visibleRect, false)) { return }
         model.expanded = false
         if panel.isKeyWindow { panel.orderOut(nil); panel.orderFrontRegardless() } // hand keystrokes back
     }
