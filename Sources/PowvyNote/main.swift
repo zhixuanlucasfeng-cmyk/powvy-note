@@ -566,6 +566,6 @@ MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
-    app.setActivationPolicy(.accessory) // no Dock icon
+    app.setActivationPolicy(.regular) // Dock icon; clicking it opens the panel (applicationShouldHandleReopen)
     app.run()
 }
