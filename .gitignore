@@ -3,3 +3,12 @@ build/
 windows/node_modules/
 windows/dist/
 .DS_Store
+node_modules/
+.wrangler/
+cloud/.wrangler/
+cloud/.dev.vars
+.deploy/
+web/md.js
+.DS_Store
+
+web/downloads/

@@ -70,4 +70,15 @@ assert.ok(opensTagPicker('note ', 5) && !opensTagPicker('a\n- ', 4) && opensTagP
 assert.ok(skipsTagClose('x [test 10/25]', 13) && skipsTagClose('[Appointment ]', 13))
 assert.ok(!skipsTagClose('x [todo]', 7) && !skipsTagClose('[test] y]', 8) && !skipsTagClose('[test', 5))
 
+const { noteTags, snippet, noteMatches } = require('./md')
+assert.deepEqual(noteTags('[test 1/2] x [Todo] [todo]'), ['todo', 'test'])
+assert.deepEqual(noteTags('none'), [])
+assert.ok(snippet('# T\n\n- [ ] buy milk\nmore') === 'buy milk' && snippet('# T') === '' && snippet('# T\n> q') === 'q')
+assert.ok(noteMatches('# Maths\n[homework] p.42', 'MATH', 'homework') && !noteMatches('# Maths', '', 'test'))
+assert.ok(noteMatches('x', '  ', null) && !noteMatches('x', 'y', null))
+
+const tt = require('./md').timetableTemplate('Monday')
+assert.ok(title(tt) === 'Monday · Timetable' && noteTags(tt).join() === 'class')
+assert.ok(splitTags(tt).some(p => p.kind === 'class' && p.detail === 'Subject 08:00'))
+
 console.log('SelfCheck OK')

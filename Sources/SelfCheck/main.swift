@@ -74,4 +74,14 @@ check(opensTagPicker(in: "note ", at: 5) && !opensTagPicker(in: "a\n- ", at: 4) 
 check(skipsTagClose(in: "x [test 10/25]", at: 13) && skipsTagClose(in: "[Appointment ]", at: 13), "hop out of dated tag")
 check(!skipsTagClose(in: "x [todo]", at: 7) && !skipsTagClose(in: "[test] y]", at: 8) && !skipsTagClose(in: "[test", at: 5), "no hop elsewhere")
 
+// Sidebar
+check(noteTags("[test 1/2] x [Todo] [todo]") == ["todo", "test"] && noteTags("none") == [], "noteTags")
+check(snippet("# T\n\n- [ ] buy milk\nmore") == "buy milk" && snippet("# T") == "" && snippet("# T\n> q") == "q", "snippet")
+check(noteMatches("# Maths\n[homework] p.42", query: "MATH", tag: "homework") && !noteMatches("# Maths", query: "", tag: "test")
+      && noteMatches("x", query: "  ", tag: nil) && !noteMatches("x", query: "y", tag: nil), "noteMatches")
+
+let tt = timetableTemplate("Monday")
+check(Note(url: URL(fileURLWithPath: "/x.md"), text: tt).title == "Monday · Timetable" && noteTags(tt) == ["class"]
+      && splitTags(tt).contains(.tag(kind: "class", detail: "Subject 08:00")), "timetable template")
+
 print("SelfCheck OK")

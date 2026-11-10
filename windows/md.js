@@ -114,4 +114,30 @@ function toggleStrike(src, start, end) {
   return { text: s, start: segs[0][0] - (ops[0] === 3 ? 2 : 0), end: lastEnd + shift }
 }
 
-if (typeof module !== 'undefined') module.exports = { title, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike }
+// Sidebar: tag filters, search, preview line — mirrors the same section of Core.swift.
+/** Tag kinds used anywhere in the note, in `tagKinds` order. */
+function noteTags(text) {
+  const used = new Set([...text.matchAll(tagRE)].map(m => m[1].toLowerCase()))
+  return tagKinds.filter(k => used.has(k))
+}
+
+/** First non-empty line after the title, with list/quote/heading markers stripped. */
+function snippet(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+  return lines.length > 1 ? lines[1].replace(/^(#+|[-*+]\s+\[[ xX]\]|[-*+>])\s*/, '') : ''
+}
+
+/** Case-insensitive text search plus an optional tag kind. */
+function noteMatches(text, query, tag) {
+  const q = query.trim().toLowerCase()
+  return (!q || text.toLowerCase().includes(q)) && (!tag || noteTags(text).includes(tag))
+}
+
+/** "New timetable" makes one of these per school day; `[class …]` lines put them under the Class filter. */
+const timetableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+function timetableTemplate(day) {
+  const block = (time, subject) => `## ${time} ${subject}\n[class ${subject} ${time.slice(0, 5)}] Teacher · Room\n- In class: \n- Not finished: \n- Homework: \n`
+  return `# ${day} · Timetable\n\n` + block('08:00–08:50', 'Subject') + '\n' + block('09:00–09:50', 'Subject')
+}
+
+if (typeof module !== 'undefined') module.exports = { timetableDays, timetableTemplate, noteTags, snippet, noteMatches, title, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike }

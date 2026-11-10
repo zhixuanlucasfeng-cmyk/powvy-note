@@ -9,5 +9,6 @@ let package = Package(
         .executableTarget(name: "PowvyNote", dependencies: ["PowvyNoteCore"]),
         // `swift run SelfCheck` — CLT has no XCTest, so plain asserts.
         .executableTarget(name: "SelfCheck", dependencies: ["PowvyNoteCore"]),
+        .executableTarget(name: "SyncCheck", dependencies: ["PowvyNoteCore"]),
     ]
 )

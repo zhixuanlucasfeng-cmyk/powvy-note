@@ -1,0 +1,1 @@
+{"name":"powvy-note-sync","private":true,"type":"module","scripts":{"build":"node scripts/build-web.mjs","dev":"npm run build && wrangler dev --config cloud/wrangler.jsonc","test":"node --test tests/*.test.mjs","deploy":"npm run build && wrangler deploy --config cloud/wrangler.jsonc"},"devDependencies":{"playwright-core":"^1.64.1","wrangler":"^4.0.0"}}

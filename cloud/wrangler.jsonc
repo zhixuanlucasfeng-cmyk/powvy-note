@@ -1,0 +1,7 @@
+{
+  "name":"powvy-note",
+  "main":"worker.js",
+  "compatibility_date":"2026-10-01",
+  "assets":{"directory":"../web","binding":"ASSETS","run_worker_first":["/api/*"]},
+  "d1_databases":[{"binding":"DB","database_name":"powvy-note","database_id":"2ae781b4-7e1a-4ad8-8322-bf02a999a779"}]
+}

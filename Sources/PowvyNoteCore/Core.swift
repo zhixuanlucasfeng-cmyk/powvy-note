@@ -45,7 +45,9 @@ public final class NoteStore {
     }
 
     public func delete(_ note: Note) throws {
-        try fm.removeItem(at: note.url)
+        let trash = dir.appendingPathComponent(".trash", isDirectory: true)
+        try fm.createDirectory(at: trash, withIntermediateDirectories: true)
+        try fm.moveItem(at: note.url, to: trash.appendingPathComponent(UUID().uuidString + "-" + note.url.lastPathComponent))
     }
 }
 
@@ -198,4 +200,34 @@ public func skipsTagClose(in src: String, at location: Int) -> Bool {
     let lineStart = ns.lineRange(for: NSRange(location: location, length: 0)).location
     let before = ns.substring(with: NSRange(location: lineStart, length: location - lineStart))
     return before.range(of: #"\[(test|appointment|class)\b[^\[\]]*$"#, options: [.regularExpression, .caseInsensitive]) != nil
+}
+
+// MARK: - Sidebar: tag filters, search, preview line. Mirrored in windows/md.js.
+
+/// Tag kinds used anywhere in the note, in `tagKinds` order.
+public func noteTags(_ text: String) -> [String] {
+    let used = Set(splitTags(text).compactMap { if case let .tag(kind, _) = $0 { return kind } else { return nil } })
+    return tagKinds.filter(used.contains)
+}
+
+/// First non-empty line after the title, with list/quote/heading markers stripped — the row's second line.
+public func snippet(_ text: String) -> String {
+    let lines = text.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    guard lines.count > 1 else { return "" }
+    return lines[1].replacingOccurrences(of: #"^(#+|[-*+]\s+\[[ xX]\]|[-*+>])\s*"#, with: "", options: .regularExpression)
+}
+
+/// Sidebar filter: case-insensitive text search, plus an optional tag kind.
+public func noteMatches(_ text: String, query: String, tag: String?) -> Bool {
+    let q = query.trimmingCharacters(in: .whitespaces)
+    return (q.isEmpty || text.localizedCaseInsensitiveContains(q)) && (tag == nil || noteTags(text).contains(tag!))
+}
+
+/// "New timetable" makes one of these per school day; `[class …]` lines put them under the Class filter.
+public let timetableDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+public func timetableTemplate(_ day: String) -> String {
+    let block = { (time: String, subject: String) in
+        "## \(time) \(subject)\n[class \(subject) \(time.prefix(5))] Teacher · Room\n- In class: \n- Not finished: \n- Homework: \n"
+    }
+    return "# \(day) · Timetable\n\n" + block("08:00–08:50", "Subject") + "\n" + block("09:00–09:50", "Subject")
 }

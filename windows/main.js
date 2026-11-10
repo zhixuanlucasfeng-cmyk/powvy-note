@@ -10,7 +10,7 @@ app.setPath('userData', path.join(dir, '.electron')) // keep Chromium's cache ou
 if (!app.requestSingleInstanceLock()) app.exit() // hands off to the running copy via 'second-instance'
 
 const PILL = { width: 200, height: 24 }
-const OPEN = { width: 600, height: 400 }
+const OPEN = { width: 680, height: 420 }
 let win, tray, store
 let expanded = false, pinned = false, lastInside = Date.now()
 
@@ -86,7 +86,7 @@ app.whenReady().then(() => {
   }
 
   ipcMain.handle('notes:load', () => store.load())
-  ipcMain.handle('notes:create', () => store.create())
+  ipcMain.handle('notes:create', (_, text) => store.create(typeof text === 'string' ? text : undefined))
   ipcMain.handle('notes:save', (_, note) => store.save(note)) // ponytail: write per keystroke; debounce if notes get huge
   ipcMain.handle('notes:delete', (_, note) => store.delete(note))
   ipcMain.on('panel:close', () => collapse(true))

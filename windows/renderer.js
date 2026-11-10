@@ -1,9 +1,9 @@
-/* global powvy, title, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike */
+/* global powvy, title, noteTags, snippet, noteMatches, timetableDays, timetableTemplate, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike */
 const $ = id => document.getElementById(id)
 const EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
 const PENCIL = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
 
-let notes = [], selected = null, preview = false, pinned = false
+let notes = [], selected = null, preview = false, pinned = false, query = '', tagFilter = null
 let tagAnchor = null, pendingAnchor = null // caret offset just after a freshly typed `[` while the tag bar is up
 const TAG_LABEL = { todo: 'To do', homework: 'Homework', test: 'Test', appointment: 'Appointment', class: 'Class' }
 const current = () => notes.find(n => n.file === selected)
@@ -80,13 +80,24 @@ function insertTag(kind) {
 
 function render() {
   const n = current()
-  $('list').replaceChildren(...notes.map(note => {
+  const filter = (kind, label) => {
     const b = document.createElement('button')
-    b.textContent = title(note.text)
+    b.className = (kind ? 'k-' + kind : '') + (tagFilter === kind ? ' sel' : '')
+    b.innerHTML = `<span>${label}</span><small>${notes.filter(x => noteMatches(x.text, '', kind)).length}</small>`
+    b.onclick = () => { tagFilter = kind; render() }
+    return b
+  }
+  $('filters').replaceChildren(filter(null, 'All'),
+    ...tagKinds.filter(k => k === tagFilter || notes.some(x => noteTags(x.text).includes(k))).map(k => filter(k, TAG_LABEL[k])))
+  const visible = notes.filter(x => noteMatches(x.text, query, tagFilter))
+  $('list').replaceChildren(...visible.map(note => {
+    const b = document.createElement('button')
     b.className = note.file === selected ? 'sel' : ''
+    b.innerHTML = `<b>${esc(title(note.text))}</b><i>${noteTags(note.text).map(k => `<span class="k-${k}"></span>`).join('')}</i><small>${esc(snippet(note.text) || 'Empty note')}</small>`
     b.onclick = () => { selected = note.file; render() }
     return b
   }))
+  if (!visible.length) $('list').innerHTML = '<div class="none">No matches</div>'
   $('name').textContent = n ? title(n.text) : ''
   $('toggle').innerHTML = preview ? PENCIL : EYE
   $('pin').classList.toggle('on', pinned)
@@ -117,6 +128,7 @@ async function reload() {
 
 async function newNote() {
   const n = await powvy.create()
+  query = $('search').value = ''; tagFilter = null // so the new note is in the list
   notes.unshift(n)
   selected = n.file
   preview = false
@@ -125,6 +137,13 @@ async function newNote() {
 }
 
 $('new').onclick = newNote
+/** One note per school day from the template, Monday on top, shown under the Class filter. */
+$('timetable').onclick = async () => {
+  for (const day of [...timetableDays].reverse()) notes.unshift(await powvy.create(timetableTemplate(day)))
+  query = $('search').value = ''; tagFilter = 'class'; selected = notes[0].file; preview = false
+  render()
+}
+$('search').oninput = e => { query = e.target.value; render() }
 $('editor').addEventListener('beforeinput', e => {
   const ta = e.target
   if (e.inputType !== 'insertText' || e.data == null) return
@@ -179,6 +198,7 @@ document.onkeydown = e => {
   if (e.key === 'Escape') { if (tagAnchor !== null) setTagAnchor(null); else powvy.close() }
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'x') { e.preventDefault(); strike() }
   if (e.ctrlKey && e.key.toLowerCase() === 'n') { e.preventDefault(); newNote() }
+  if (e.ctrlKey && e.key.toLowerCase() === 'f') { e.preventDefault(); $('search').focus() }
 }
 
 // Pick up edits made outside the app (e.g. in Notepad) each time it opens.

@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('powvy', {
   load: () => ipcRenderer.invoke('notes:load'),
-  create: () => ipcRenderer.invoke('notes:create'),
+  create: text => ipcRenderer.invoke('notes:create', text),
   save: note => ipcRenderer.invoke('notes:save', note),
   remove: note => ipcRenderer.invoke('notes:delete', note),
   close: () => ipcRenderer.send('panel:close'),
