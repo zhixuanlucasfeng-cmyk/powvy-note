@@ -3,7 +3,8 @@ import PackageDescription
 
 let package = Package(
     name: "PowvyNote",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v14), .iOS(.v17)],
+    products: [.library(name: "PowvyNoteCore", targets: ["PowvyNoteCore"])], // used by ios/ (iPad app)
     targets: [
         .target(name: "PowvyNoteCore"),
         .executableTarget(name: "PowvyNote", dependencies: ["PowvyNoteCore"]),

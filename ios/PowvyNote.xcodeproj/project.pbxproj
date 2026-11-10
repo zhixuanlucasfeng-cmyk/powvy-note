@@ -1,0 +1,274 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000006 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000005 /* App.swift */; };
+		A1B2C3D4E5F6000000000008 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000007 /* CloudSync.swift */; };
+		A1B2C3D4E5F6000000000019 /* PowvyNoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F6000000000018 /* PowvyNoteCore */; };
+		A1B2C3D4E5F600000000001B /* AppIcon60x60@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000001A /* AppIcon60x60@2x.png */; };
+		A1B2C3D4E5F600000000001D /* AppIcon60x60@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000001C /* AppIcon60x60@3x.png */; };
+		A1B2C3D4E5F600000000001F /* AppIcon76x76@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000001E /* AppIcon76x76@2x.png */; };
+		A1B2C3D4E5F6000000000021 /* AppIcon83.5x83.5@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000020 /* AppIcon83.5x83.5@2x.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000004 /* Powvy Note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Powvy Note.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6000000000005 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000007 /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CloudSync.swift; path = ../Sources/PowvyNote/CloudSync.swift; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F600000000001A /* AppIcon60x60@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon60x60@2x.png"; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000001C /* AppIcon60x60@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon60x60@3x.png"; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000001E /* AppIcon76x76@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon76x76@2x.png"; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000020 /* AppIcon83.5x83.5@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon83.5x83.5@2x.png"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1B2C3D4E5F6000000000010 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6000000000019 /* PowvyNoteCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1B2C3D4E5F6000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F600000000000B /* PowvyNoteiPad */,
+				A1B2C3D4E5F600000000000C /* Shared */,
+				A1B2C3D4E5F6000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000004 /* Powvy Note.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F600000000000B /* PowvyNoteiPad */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000005 /* App.swift */,
+				A1B2C3D4E5F6000000000009 /* Info.plist */,
+				A1B2C3D4E5F600000000000A /* icons */,
+			);
+			path = PowvyNoteiPad;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F600000000000A /* icons */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F600000000001A /* AppIcon60x60@2x.png */,
+				A1B2C3D4E5F600000000001C /* AppIcon60x60@3x.png */,
+				A1B2C3D4E5F600000000001E /* AppIcon76x76@2x.png */,
+				A1B2C3D4E5F6000000000020 /* AppIcon83.5x83.5@2x.png */,
+			);
+			path = icons;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F600000000000C /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000007 /* CloudSync.swift */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1B2C3D4E5F600000000000D /* PowvyNoteiPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F6000000000011;
+			buildPhases = (
+				A1B2C3D4E5F600000000000E /* Sources */,
+				A1B2C3D4E5F6000000000010 /* Frameworks */,
+				A1B2C3D4E5F600000000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PowvyNoteiPad;
+			packageProductDependencies = (
+				A1B2C3D4E5F6000000000018 /* PowvyNoteCore */,
+			);
+			productName = PowvyNoteiPad;
+			productReference = A1B2C3D4E5F6000000000004 /* Powvy Note.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1B2C3D4E5F6000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+			};
+			buildConfigurationList = A1B2C3D4E5F6000000000012;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1B2C3D4E5F6000000000002;
+			packageReferences = (
+				A1B2C3D4E5F6000000000017 /* XCLocalSwiftPackageReference ".." */,
+			);
+			productRefGroup = A1B2C3D4E5F6000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1B2C3D4E5F600000000000D /* PowvyNoteiPad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1B2C3D4E5F600000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F600000000001B /* AppIcon60x60@2x.png in Resources */,
+				A1B2C3D4E5F600000000001D /* AppIcon60x60@3x.png in Resources */,
+				A1B2C3D4E5F600000000001F /* AppIcon76x76@2x.png in Resources */,
+				A1B2C3D4E5F6000000000021 /* AppIcon83.5x83.5@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1B2C3D4E5F600000000000E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6000000000006 /* App.swift in Sources */,
+				A1B2C3D4E5F6000000000008 /* CloudSync.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1B2C3D4E5F6000000000015 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				SDKROOT = iphoneos;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F6000000000016 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A1B2C3D4E5F6000000000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4A6744D72Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PowvyNoteiPad/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Powvy Note";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zhixuanlucasfeng.powvynote;
+				PRODUCT_NAME = "Powvy Note";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F6000000000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4A6744D72Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PowvyNoteiPad/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Powvy Note";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zhixuanlucasfeng.powvynote;
+				PRODUCT_NAME = "Powvy Note";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1B2C3D4E5F6000000000012 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F6000000000015 /* Debug */,
+				A1B2C3D4E5F6000000000016 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F6000000000011 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F6000000000013 /* Debug */,
+				A1B2C3D4E5F6000000000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A1B2C3D4E5F6000000000017 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D4E5F6000000000018 /* PowvyNoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PowvyNoteCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1B2C3D4E5F6000000000001 /* Project object */;
+}
