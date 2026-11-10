@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A1B2C3D4E5F6000000000006 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000005 /* App.swift */; };
+		A1B2C3D4E5F6000000000F02 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000F01 /* Shared.swift */; };
 		A1B2C3D4E5F6000000000008 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000007 /* CloudSync.swift */; };
 		A1B2C3D4E5F6000000000019 /* PowvyNoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F6000000000018 /* PowvyNoteCore */; };
 		A1B2C3D4E5F600000000001B /* AppIcon60x60@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000001A /* AppIcon60x60@2x.png */; };
@@ -20,6 +21,7 @@
 		A1B2C3D4E5F6000000000004 /* Powvy Note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Powvy Note.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D4E5F6000000000005 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000F01 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Shared.swift; path = ../Sources/PowvyNote/Shared.swift; sourceTree = SOURCE_ROOT; };
 		A1B2C3D4E5F6000000000007 /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CloudSync.swift; path = ../Sources/PowvyNote/CloudSync.swift; sourceTree = SOURCE_ROOT; };
 		A1B2C3D4E5F600000000001A /* AppIcon60x60@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon60x60@2x.png"; sourceTree = "<group>"; };
 		A1B2C3D4E5F600000000001C /* AppIcon60x60@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon60x60@3x.png"; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 		A1B2C3D4E5F600000000000C /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F6000000000F01 /* Shared.swift */,
 				A1B2C3D4E5F6000000000007 /* CloudSync.swift */,
 			);
 			name = Shared;
@@ -159,6 +162,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B2C3D4E5F6000000000006 /* App.swift in Sources */,
+				A1B2C3D4E5F6000000000F02 /* Shared.swift in Sources */,
 				A1B2C3D4E5F6000000000008 /* CloudSync.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
