@@ -77,8 +77,11 @@ assert.ok(snippet('# T\n\n- [ ] buy milk\nmore') === 'buy milk' && snippet('# T'
 assert.ok(noteMatches('# Maths\n[homework] p.42', 'MATH', 'homework') && !noteMatches('# Maths', '', 'test'))
 assert.ok(noteMatches('x', '  ', null) && !noteMatches('x', 'y', null))
 
-const tt = require('./md').timetableTemplate('Monday')
-assert.ok(title(tt) === 'Monday · Timetable' && noteTags(tt).join() === 'class')
-assert.ok(splitTags(tt).some(p => p.kind === 'class' && p.detail === 'Subject 08:00'))
+const W = require('./md')
+const mon = W.weekStart(new Date(2026, 10, 12, 15))
+assert.equal(W.dayNoteTitle('Monday', mon), 'Monday 9 Nov · Timetable')
+assert.deepEqual(W.weekNotes('# Timetable template\n## monday\n07:50–08:40 Economics · Mr P · PF8\nFree [study]\n## Notaday\n9:00 X\n## Wednesday\n', mon),
+  ['# Monday 9 Nov · Timetable\n\n## 07:50–08:40 Economics\n[class Economics 07:50] Mr P · PF8\n- In class: \n- Not finished: \n- Homework: \n\n## Free (study)\n[class Free (study)]\n- In class: \n- Not finished: \n- Homework: \n'])
+assert.ok(W.weekNotes(W.timetableTemplateExample, mon).length === 2 && W.isTimetableTemplate(W.timetableTemplateExample) && !W.isTimetableTemplate('# Monday'))
 
 console.log('SelfCheck OK')

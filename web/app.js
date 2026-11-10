@@ -37,7 +37,16 @@ function queueEdit(id,text,deleted=false){
 }
 $('editor').oninput=()=>{if(selected)queueEdit(selected,$('editor').value)};
 async function newNote(){$('editor').disabled=true;$('new-note').disabled=true;try{await writing;const id=crypto.randomUUID();await queueEdit(id,'# 新笔记\n\n');selected=id;tagFilter=null;$('search').value='';preview=false;listOpen(false);await refresh();}finally{$('editor').disabled=false;$('new-note').disabled=false;}$('editor').focus();}
-async function newTimetable(){await writing;let first;for(const day of [...timetableDays].reverse()){first=crypto.randomUUID();await queueEdit(first,timetableTemplate(day));await new Promise(r=>setTimeout(r,3));}/* ponytail: 3 ms gap so Date.now() ordering puts Monday on top */tagFilter='class';$('search').value='';selected=first;preview=false;listOpen(false);await refresh();}
+/* Calendar button. No template yet → make one to fill in. Otherwise sync first (the Mac app may already have made this
+   week's notes), then add any missing blank day notes for this week and jump to today's. Manual only on the web, so two
+   devices can't both make the same week before they've synced. */
+async function newTimetable(){await writing;$('search').value='';preview=false;const live=()=>Object.values(records).filter(n=>!n.deleted);
+ let template=live().find(n=>isTimetableTemplate(n.text));
+ if(!template){const id=crypto.randomUUID();await queueEdit(id,timetableTemplateExample);tagFilter=null;selected=id;listOpen(false);await refresh();return;}
+ if(navigator.onLine)await sync();template=live().find(n=>isTimetableTemplate(n.text))||template;const have=new Set(live().map(n=>title(n.text)));
+ for(const text of weekNotes(template.text,weekStart(new Date())).reverse()){if(have.has(title(text)))continue;await queueEdit(crypto.randomUUID(),text);await new Promise(r=>setTimeout(r,3));}/* ponytail: 3 ms gap so Date.now() ordering puts Monday on top */
+ await writing;records=await repo.read();const monday=weekStart(new Date()),today=(new Date().getDay()+6)%7,wanted=[dayNoteTitle(weekDays[today],new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+today)),dayNoteTitle('Monday',monday)];
+ const pick=live().find(n=>title(n.text)===wanted[0])||live().find(n=>title(n.text)===wanted[1]);tagFilter='class';if(pick)selected=pick.id;listOpen(false);await refresh();}
 $('new-timetable').onclick=()=>newTimetable().catch(e=>notice(e.message));
 $('new-note').onclick=$('empty-new').onclick=()=>newNote().catch(e=>notice(e.message));
 $('delete-note').onclick=async()=>{if(selected&&confirm('删除这篇笔记？删除也会同步到其他设备。')){await queueEdit(selected,'',true);selected=null;await refresh();}};

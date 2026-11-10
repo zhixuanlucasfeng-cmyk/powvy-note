@@ -31,6 +31,7 @@ final class Model: ObservableObject {
         if notes.isEmpty, let n = try? store.create(text: "# Welcome to Powvy Note\n\n- [ ] Hover the notch to open\n- [ ] Click a note to type\n- [x] Markdown preview with the eye button\n- [ ] Menu bar icon reopens it any time\n") {
             notes = [n]
         }
+        ensureWeek()
         selected = notes.first?.url
         cloud.onChanges = { [weak self] in
             guard let self else { return }
@@ -59,16 +60,35 @@ final class Model: ObservableObject {
         preview = false
     }
 
-    /// One note per school day from the timetable template, Monday on top, shown under the Class filter.
-    func newTimetable() {
-        for day in timetableDays.reversed() {
-            guard let n = try? store.create(text: timetableTemplate(day)) else { return }
+    /// Makes this week's blank day notes from the "Timetable template" note, unless they already exist.
+    /// Runs on launch and every time the panel opens; past weeks are left alone.
+    func ensureWeek() {
+        guard let template = notes.first(where: { isTimetableTemplate($0.text) }) else { return }
+        let have = Set(notes.map(\.title))
+        for text in weekNotes(template: template.text, monday: weekStart(Date())).reversed()
+        where !have.contains(Note(url: template.url, text: text).title) {
+            guard let n = try? store.create(text: text) else { return }
             cloud.track(n)
             notes.insert(n, at: 0)
         }
-        query = ""; tagFilter = "class"
-        selected = notes.first?.url
-        preview = false
+    }
+
+    /// Calendar button: no template yet → make one to fill in; otherwise jump to today's timetable note.
+    func openTimetable() {
+        query = ""; preview = false
+        guard notes.contains(where: { isTimetableTemplate($0.text) }) else {
+            guard let n = try? store.create(text: timetableTemplateExample) else { return }
+            cloud.track(n)
+            notes.insert(n, at: 0)
+            tagFilter = nil; selected = n.url
+            return
+        }
+        ensureWeek()
+        tagFilter = "class"
+        let monday = weekStart(Date())
+        let today = (Calendar(identifier: .gregorian).component(.weekday, from: Date()) + 5) % 7 // Monday = 0
+        let wanted = [dayNoteTitle(weekDays[today], Calendar.current.date(byAdding: .day, value: today, to: monday)!), dayNoteTitle("Monday", monday)]
+        selected = (notes.first { $0.title == wanted[0] } ?? notes.first { $0.title == wanted[1] } ?? notes.first { noteTags($0.text).contains("class") })?.url
     }
 
     /// Strike out (or restore) the selection, or the caret's line. Undoable.
@@ -190,7 +210,7 @@ struct Sidebar: View {
                 Text("Powvy Note").font(.system(size: 13, weight: .bold))
                 Spacer()
                 IconButton("icloud", help: "账号与同步 / Account & sync") { model.showSync = true }
-                IconButton("calendar.badge.plus", help: "New timetable — one note per school day") { model.newTimetable() }
+                IconButton("calendar", help: "Timetable — a blank one every week; old weeks stay under Class") { model.openTimetable() }
                 IconButton("square.and.pencil", help: "New note (⌘N)") { model.newNote() }
                     .keyboardShortcut("n")
             }
@@ -498,7 +518,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.contentView = NSHostingView(rootView: RootView(model: model))
 
         model.notchSize = notchSize()
-        model.onExpand = { [weak self] open in self?.panel.ignoresMouseEvents = !open } // collapsed: clicks pass through to the menu bar
+        model.onExpand = { [weak self] open in
+            self?.panel.ignoresMouseEvents = !open
+            if open { self?.model.ensureWeek() } // a new week starts with blank day notes
+        } // collapsed: clicks pass through to the menu bar
         model.onClose = { [weak self] in self?.collapseIfIdle(force: true) }
         layout()
         panel.ignoresMouseEvents = true

@@ -80,8 +80,14 @@ check(snippet("# T\n\n- [ ] buy milk\nmore") == "buy milk" && snippet("# T") == 
 check(noteMatches("# Maths\n[homework] p.42", query: "MATH", tag: "homework") && !noteMatches("# Maths", query: "", tag: "test")
       && noteMatches("x", query: "  ", tag: nil) && !noteMatches("x", query: "y", tag: nil), "noteMatches")
 
-let tt = timetableTemplate("Monday")
-check(Note(url: URL(fileURLWithPath: "/x.md"), text: tt).title == "Monday · Timetable" && noteTags(tt) == ["class"]
-      && splitTags(tt).contains(.tag(kind: "class", detail: "Subject 08:00")), "timetable template")
+// Weekly timetable
+var comps = DateComponents(); comps.year = 2026; comps.month = 11; comps.day = 12; comps.hour = 15
+let thu = Calendar(identifier: .gregorian).date(from: comps)!
+let mon = weekStart(thu)
+check(Calendar(identifier: .gregorian).component(.day, from: mon) == 9 && dayNoteTitle("Monday", mon) == "Monday 9 Nov · Timetable", "weekStart")
+let wk = weekNotes(template: "# Timetable template\n## monday\n07:50–08:40 Economics · Mr P · PF8\nFree [study]\n## Notaday\n9:00 X\n## Wednesday\n", monday: mon)
+check(wk == ["# Monday 9 Nov · Timetable\n\n## 07:50–08:40 Economics\n[class Economics 07:50] Mr P · PF8\n- In class: \n- Not finished: \n- Homework: \n\n## Free (study)\n[class Free (study)]\n- In class: \n- Not finished: \n- Homework: \n"], "weekNotes: \(wk)")
+check(weekNotes(template: timetableTemplateExample, monday: mon).count == 2 && isTimetableTemplate(timetableTemplateExample) && !isTimetableTemplate("# Monday"), "example template")
+check(noteTags(wk[0]) == ["class"], "week notes are under Class")
 
 print("SelfCheck OK")

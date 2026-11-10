@@ -1,4 +1,4 @@
-const CACHE='powvy-note-cc061c7b5c699574';const SHELL=['/','/index.html','/style.css','/app.js','/sync.js','/md.js','/icon.svg','/icon-192.png','/icon-512.png','/manifest.webmanifest','/power-theme.css','/power-display.ttf','/power-mono.ttf','/chainsaw-city.webp'];
+const CACHE='powvy-note-4d9570dcf80ff63f';const SHELL=['/','/index.html','/style.css','/app.js','/sync.js','/md.js','/icon.svg','/icon-192.png','/icon-512.png','/manifest.webmanifest','/power-theme.css','/power-display.ttf','/power-mono.ttf','/chainsaw-city.webp'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||u.pathname.startsWith('/api/')||u.pathname.startsWith('/downloads/'))return;if(e.request.mode==='navigate')e.respondWith(caches.match('/').then(r=>r||fetch(e.request)));else e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});

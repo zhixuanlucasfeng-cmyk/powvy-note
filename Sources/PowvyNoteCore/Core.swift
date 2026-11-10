@@ -223,11 +223,80 @@ public func noteMatches(_ text: String, query: String, tag: String?) -> Bool {
     return (q.isEmpty || text.localizedCaseInsensitiveContains(q)) && (tag == nil || noteTags(text).contains(tag!))
 }
 
-/// "New timetable" makes one of these per school day; `[class …]` lines put them under the Class filter.
-public let timetableDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-public func timetableTemplate(_ day: String) -> String {
-    let block = { (time: String, subject: String) in
-        "## \(time) \(subject)\n[class \(subject) \(time.prefix(5))] Teacher · Room\n- In class: \n- Not finished: \n- Homework: \n"
+// MARK: - Weekly timetable. Mirrored in windows/md.js.
+// The classes live in one "Timetable template" note; every week a fresh, blank set of day notes is made from it.
+// Old weeks are ordinary notes, found under the Class filter or by searching a date ("9 Nov").
+
+public let timetableTemplateTitle = "Timetable template"
+public let weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+private let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+public let timetableTemplateExample = """
+# Timetable template
+
+One class per line under its day: time, subject · teacher · room.
+Every week a fresh, blank note per day is made from this. Old weeks stay in the list: tap Class, or search a date like "9 Nov".
+
+## Monday
+08:00–08:50 Maths · Mr Smith · Room 12
+09:00–09:50 English · Ms Lee · Room 3
+
+## Tuesday
+08:00–08:50 Science · Dr Khan · Lab 2
+
+## Wednesday
+
+## Thursday
+
+## Friday
+
+"""
+
+public func isTimetableTemplate(_ text: String) -> Bool {
+    Note(url: URL(fileURLWithPath: "/t.md"), text: text).title.caseInsensitiveCompare(timetableTemplateTitle) == .orderedSame
+}
+
+/// Monday 00:00 of the week containing `date`, in the local calendar.
+public func weekStart(_ date: Date) -> Date {
+    var cal = Calendar(identifier: .gregorian); cal.firstWeekday = 2
+    return cal.dateInterval(of: .weekOfYear, for: date)!.start
+}
+
+/// "Monday 16 Nov · Timetable" — also how an existing week is recognised, so keep it stable.
+public func dayNoteTitle(_ day: String, _ date: Date) -> String {
+    let c = Calendar(identifier: .gregorian).dateComponents([.day, .month], from: date)
+    return "\(day) \(c.day!) \(months[c.month! - 1]) · Timetable"
+}
+
+/// One blank note per day that has classes, Monday first, for the week starting `monday`.
+public func weekNotes(template: String, monday: Date) -> [String] {
+    var classes: [String: [String]] = [:], day: String?
+    for raw in template.split(separator: "\n", omittingEmptySubsequences: false) {
+        let line = raw.trimmingCharacters(in: .whitespaces)
+        if line.hasPrefix("## ") {
+            let d = line.dropFirst(3).trimmingCharacters(in: .whitespaces).capitalized
+            day = weekDays.contains(d) ? d : nil
+        } else if let d = day, !line.isEmpty {
+            classes[d, default: []].append(line)
+        }
     }
-    return "# \(day) · Timetable\n\n" + block("08:00–08:50", "Subject") + "\n" + block("09:00–09:50", "Subject")
+    let re = try! NSRegularExpression(pattern: #"^(\d{1,2}[:.]\d{2}(?:\s*[–-]\s*\d{1,2}[:.]\d{2})?)\s+(.+?)(?:\s+·\s+(.*))?$"#)
+    return weekDays.enumerated().compactMap { i, d in
+        guard let lines = classes[d] else { return nil }
+        let date = Calendar(identifier: .gregorian).date(byAdding: .day, value: i, to: monday)!
+        let blocks = lines.map { line -> String in
+            let ns = line as NSString
+            var time = "", subject = line, rest = ""
+            if let m = re.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) {
+                time = ns.substring(with: m.range(at: 1)); subject = ns.substring(with: m.range(at: 2))
+                if m.range(at: 3).location != NSNotFound { rest = ns.substring(with: m.range(at: 3)) }
+            }
+            subject = subject.replacingOccurrences(of: "[", with: "(").replacingOccurrences(of: "]", with: ")")
+            let start = time.split(whereSeparator: { $0 == "–" || $0 == "-" }).first.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
+            let head = time.isEmpty ? subject : "\(time) \(subject)"
+            let tag = "[class \(subject)\(start.isEmpty ? "" : " " + start)]" + (rest.isEmpty ? "" : " " + rest)
+            return "## \(head)\n\(tag)\n- In class: \n- Not finished: \n- Homework: \n"
+        }
+        return "# \(dayNoteTitle(d, date))\n\n" + blocks.joined(separator: "\n")
+    }
 }

@@ -133,11 +133,67 @@ function noteMatches(text, query, tag) {
   return (!q || text.toLowerCase().includes(q)) && (!tag || noteTags(text).includes(tag))
 }
 
-/** "New timetable" makes one of these per school day; `[class …]` lines put them under the Class filter. */
-const timetableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-function timetableTemplate(day) {
-  const block = (time, subject) => `## ${time} ${subject}\n[class ${subject} ${time.slice(0, 5)}] Teacher · Room\n- In class: \n- Not finished: \n- Homework: \n`
-  return `# ${day} · Timetable\n\n` + block('08:00–08:50', 'Subject') + '\n' + block('09:00–09:50', 'Subject')
+// Weekly timetable — mirrors the same section of Core.swift. The classes live in one "Timetable template" note;
+// every week a fresh, blank set of day notes is made from it. Old weeks stay as ordinary notes.
+const timetableTemplateTitle = 'Timetable template'
+const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const timetableTemplateExample = `# Timetable template
+
+One class per line under its day: time, subject · teacher · room.
+Every week a fresh, blank note per day is made from this. Old weeks stay in the list: tap Class, or search a date like "9 Nov".
+
+## Monday
+08:00–08:50 Maths · Mr Smith · Room 12
+09:00–09:50 English · Ms Lee · Room 3
+
+## Tuesday
+08:00–08:50 Science · Dr Khan · Lab 2
+
+## Wednesday
+
+## Thursday
+
+## Friday
+`
+
+const isTimetableTemplate = text => title(text).toLowerCase() === timetableTemplateTitle.toLowerCase()
+
+/** Monday 00:00 of the week containing `date`, local time. */
+function weekStart(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  d.setDate(d.getDate() - (d.getDay() + 6) % 7)
+  return d
 }
 
-if (typeof module !== 'undefined') module.exports = { timetableDays, timetableTemplate, noteTags, snippet, noteMatches, title, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike }
+/** "Monday 16 Nov · Timetable" — also how an existing week is recognised, so keep it stable. */
+const dayNoteTitle = (day, date) => `${day} ${date.getDate()} ${MONTHS[date.getMonth()]} · Timetable`
+
+/** One blank note per day that has classes, Monday first, for the week starting `monday`. */
+function weekNotes(template, monday) {
+  const classes = {}
+  let day = null
+  for (const raw of template.split('\n')) {
+    const line = raw.trim()
+    if (line.startsWith('## ')) {
+      const d = line.slice(3).trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+      day = weekDays.includes(d) ? d : null
+    } else if (day && line) (classes[day] ||= []).push(line)
+  }
+  return weekDays.flatMap((d, i) => {
+    if (!classes[d]) return []
+    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+    const blocks = classes[d].map(line => {
+      const m = line.match(/^(\d{1,2}[:.]\d{2}(?:\s*[–-]\s*\d{1,2}[:.]\d{2})?)\s+(.+?)(?:\s+·\s+(.*))?$/)
+      const time = m ? m[1] : '', rest = m && m[3] ? m[3] : ''
+      const subject = (m ? m[2] : line).replace(/\[/g, '(').replace(/]/g, ')')
+      const start = time.split(/[–-]/)[0].trim()
+      const head = time ? `${time} ${subject}` : subject
+      const tag = `[class ${subject}${start ? ' ' + start : ''}]` + (rest ? ' ' + rest : '')
+      return `## ${head}\n${tag}\n- In class: \n- Not finished: \n- Homework: \n`
+    })
+    return [`# ${dayNoteTitle(d, date)}\n\n` + blocks.join('\n')]
+  })
+}
+
+if (typeof module !== 'undefined') module.exports = { timetableTemplateTitle, weekDays, timetableTemplateExample, isTimetableTemplate, weekStart, dayNoteTitle, weekNotes, noteTags, snippet, noteMatches, title, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike }

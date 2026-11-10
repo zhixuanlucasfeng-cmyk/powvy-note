@@ -13,8 +13,11 @@ Powvy Note 安装说明（M 系列和 Intel Mac 都能用，需要 macOS 14 或�
 - 标签：输入 [ 会弹出 To do / Homework / Test / Appointment / Class，点一下或按 1–5 插入。
   Test、Appointment 和 Class 插入后光标停在括号里，直接输日期或科目，比如 [test 10/25]、[appointment 周五 3pm]、[class Maths 9am]，按回车或 Tab 跳出括号。
 - 左边侧栏：顶部搜索（⌘F），下面按标签筛选（全部 / To do / Homework / Test / Appointment / Class，带数量）。
-- 课表：点侧栏顶部的日历按钮，会生成周一到周五 5 篇课表笔记。把 Subject、Teacher · Room 和时间改成自己的课，
-  每节课下面有 In class / Not finished / Homework 三行可以写课堂记录；一节课一段，多的课复制一段就行。点 Class 只看课表。
+- 课表（每周自动换新）：第一次点侧栏顶部的日历按钮，会出现一篇「Timetable template」。
+  在 ## Monday 到 ## Friday 下面每行写一节课：时间 科目 · 老师 · 教室，例如 08:00–08:50 Maths · Mr Smith · Room 12。
+  之后每周第一次打开，都会自动生成这周空白的周一到周五课表（例如 Monday 16 Nov · Timetable），
+  每节课下面有 In class / Not finished / Homework 可以写。以前的周不会被删：点 Class 能看到全部，搜日期（如 9 Nov）就能找到那一周。
+  课表变了就改模板，从下一周开始生效。
 - 点 Dock 里的 Powvy Note 图标就能打开便签。
 - 菜单栏的便签图标：打开便签 / 开机自启（Open at Login）/ 退出。
 - 退出后想再打开：在「应用程序」、启动台或 Spotlight（⌘ 空格 输入 Powvy）里打开 Powvy Note。

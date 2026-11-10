@@ -1,4 +1,4 @@
-/* global powvy, title, noteTags, snippet, noteMatches, timetableDays, timetableTemplate, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike */
+/* global powvy, title, noteTags, snippet, noteMatches, isTimetableTemplate, weekNotes, weekStart, dayNoteTitle, weekDays, timetableTemplateExample, parseMarkdown, toggleTask, strikeRE, tagRE, tagKinds, splitTags, tagInsertion, opensTagPicker, skipsTagClose, toggleStrike */
 const $ = id => document.getElementById(id)
 const EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
 const PENCIL = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
@@ -122,6 +122,7 @@ function update(text) {
 
 async function reload() {
   notes = await powvy.load()
+  await ensureWeek() // a new week starts with blank day notes
   if (!current()) selected = notes[0]?.file ?? null
   render()
 }
@@ -137,10 +138,28 @@ async function newNote() {
 }
 
 $('new').onclick = newNote
-/** One note per school day from the template, Monday on top, shown under the Class filter. */
+/** Makes this week's blank day notes from the "Timetable template" note unless they exist; past weeks stay. */
+async function ensureWeek() {
+  const template = notes.find(n => isTimetableTemplate(n.text))
+  if (!template) return
+  const have = new Set(notes.map(n => title(n.text)))
+  for (const text of weekNotes(template.text, weekStart(new Date())).reverse()) {
+    if (!have.has(title(text))) notes.unshift(await powvy.create(text))
+  }
+}
+/** Calendar button: no template yet → make one to fill in; otherwise jump to today's timetable note. */
 $('timetable').onclick = async () => {
-  for (const day of [...timetableDays].reverse()) notes.unshift(await powvy.create(timetableTemplate(day)))
-  query = $('search').value = ''; tagFilter = 'class'; selected = notes[0].file; preview = false
+  query = $('search').value = ''; preview = false
+  if (!notes.some(n => isTimetableTemplate(n.text))) {
+    const n = await powvy.create(timetableTemplateExample)
+    notes.unshift(n); tagFilter = null; selected = n.file
+  } else {
+    await ensureWeek()
+    tagFilter = 'class'
+    const monday = weekStart(new Date()), today = (new Date().getDay() + 6) % 7
+    const wanted = [dayNoteTitle(weekDays[today], new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + today)), dayNoteTitle('Monday', monday)]
+    selected = (notes.find(n => title(n.text) === wanted[0]) || notes.find(n => title(n.text) === wanted[1]) || notes.find(n => noteTags(n.text).includes('class')))?.file ?? selected
+  }
   render()
 }
 $('search').oninput = e => { query = e.target.value; render() }
